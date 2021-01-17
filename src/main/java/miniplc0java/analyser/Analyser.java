@@ -562,6 +562,8 @@ public final class Analyser {
                     if(sy == null)
                     {
                         GlobalEntry gy = findGlobal(name);
+                        if( gy == null)
+                            throw new AnalyzeError(ErrorCode.NotDeclared,curPos);
                         Type type = gy.getType();
                         recentType = type;
                         int id = gy.getId();
@@ -600,7 +602,7 @@ public final class Analyser {
                 else if(check(TokenType.L_PAREN))
                 {
                     GlobalEntry g = findGlobal(name);
-                    if(gy == null)
+                    if(g == null)
                         throw new AnalyzeError(ErrorCode.NotDeclared,curPos);
                     Type type = g.getType();
                     if(!g.isFunc)
