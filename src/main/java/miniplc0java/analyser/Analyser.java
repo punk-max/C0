@@ -1,10 +1,6 @@
 package miniplc0java.analyser;
 
-import miniplc0java.error.AnalyzeError;
-import miniplc0java.error.CompileError;
-import miniplc0java.error.ErrorCode;
-import miniplc0java.error.ExpectedTokenError;
-import miniplc0java.error.TokenizeError;
+import miniplc0java.error.*;
 import miniplc0java.instruction.Function;
 import miniplc0java.instruction.Instruction;
 import miniplc0java.instruction.Operation;
@@ -13,7 +9,10 @@ import miniplc0java.tokenizer.TokenType;
 import miniplc0java.tokenizer.Tokenizer;
 import miniplc0java.util.Pos;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class Analyser {
 
@@ -330,6 +329,54 @@ public final class Analyser {
         }
     }
 
+    //标准库函数调用
+    private void useLib(String name,Pos curPos) throws AnalyzeError {
+        if(name.equals("getint")){
+            instructions.add(new Instruction(Operation.scani));
+            stackSetoff1++;
+            isTrue = false;
+        }
+        else if(name.equals("getdouble")){
+            instructions.add(new Instruction(Operation.scanf));
+            stackSetoff1++;
+            isTrue = false;
+        }
+        else if(name.equals("getchar")){
+            instructions.add(new Instruction(Operation.scanc));
+            stackSetoff1++;
+            isTrue = false;
+        }
+        else if(name.equals("putint")){
+            if(recentType!=Type.Int)
+                throw new AnalyzeError(ErrorCode.WrongType,curPos);
+            instructions.add(new Instruction(Operation.printi));
+            stackSetoff1--;
+            isTrue = true;
+        }
+        else if(name.equals("putdouble")){
+            if(recentType!=Type.Double)
+                throw new AnalyzeError(ErrorCode.WrongType,curPos);
+            instructions.add(new Instruction(Operation.printf));
+            stackSetoff1--;
+            isTrue = true;
+        }
+        else if(name.equals("putchar")){
+            instructions.add(new Instruction(Operation.printc));
+            stackSetoff1--;
+            isTrue = true;
+        }
+        else if(name.equals("putstr")){
+            instructions.add(new Instruction(Operation.prints));
+            stackSetoff1--;
+            isTrue = true;
+        }
+        else if(name.equals("putln")){
+            instructions.add(new Instruction(Operation.printi));
+        }
+        else
+            throw new AnalyzeError(ErrorCode.NotDeclared,curPos);
+    }
+
     //获取全局变量是否为常量
     private boolean isGlobalConstant(String name, Pos curPos) throws AnalyzeError {
         GlobalEntry entry = findGlobal(name);
@@ -562,7 +609,7 @@ public final class Analyser {
                     if(sy == null)
                     {
                         GlobalEntry gy = findGlobal(name);
-                        if( gy == null)
+                        if(gy == null)
                             throw new AnalyzeError(ErrorCode.NotDeclared,curPos);
                         Type type = gy.getType();
                         recentType = type;
@@ -602,61 +649,70 @@ public final class Analyser {
                 else if(check(TokenType.L_PAREN))
                 {
                     GlobalEntry g = findGlobal(name);
+                    //可能是库函数
                     if(g == null)
-                        throw new AnalyzeError(ErrorCode.NotDeclared,curPos);
-                    Type type = g.getType();
-                    if(!g.isFunc)
-                        throw new AnalyzeError(ErrorCode.InvalidIdentifier,curPos);
-                    int id  = g.getId();
-                    expect(TokenType.L_PAREN);
-
-                    //压入返回值
-                    instructions.add(new Instruction(Operation.push,0L));
-                    stackSetoff2=0;
-                    stackSetoff1++;
-                    locaTypeTable.put(stackSetoff1,type);
-
-                    //存入函数返回值slot数
-                    slotTable.put(funcLevel,stackSetoff1);
-
-                    //保存原有类型表
-                    typeTable.put(funcLevel,locaTypeTable);
-
-                    //函数调用层次加一
-                    funcLevel++;
-
-                    //进入函数空间,清空原有的局域类型表
-                    locaTypeTable.clear();
-
-                    if(!check(TokenType.R_PAREN))
-                        analyseCallParamList();
-                    expect(TokenType.R_PAREN);
-                    funcLevel--;
-
-                    //重新取出原有的类型表
-                    locaTypeTable = typeTable.get(funcLevel);
-
-                    instructions.add(new Instruction(Operation.call,id));
-
-                    //获取原有的slot偏移
-                    stackSetoff1 = slotTable.get(funcLevel);
-                    //判断返回值类型
-                    if(type == Type.Void)
                     {
-                        isSameType =  (recentType == Type.Void);
-                        recentType = Type.Void;
+                        expect(TokenType.L_PAREN);
+                        if(!check(TokenType.R_PAREN))
+                            analyseCallParamList();
+                        expect(TokenType.R_PAREN);
+                        useLib(name,curPos);
                     }
-                    else if(type == Type.Int)
-                    {
-                        isSameType =  (recentType == Type.Int);
-                        recentType = Type.Int;
+                    else{
+                        Type type = g.getType();
+                        if(!g.isFunc)
+                            throw new AnalyzeError(ErrorCode.InvalidIdentifier,curPos);
+                        int id  = g.getId();
+                        expect(TokenType.L_PAREN);
+
+                        //压入返回值
+                        instructions.add(new Instruction(Operation.push,0L));
+                        stackSetoff2=0;
+                        stackSetoff1++;
+                        locaTypeTable.put(stackSetoff1,type);
+
+                        //存入函数返回值slot数
+                        slotTable.put(funcLevel,stackSetoff1);
+
+                        //保存原有类型表
+                        typeTable.put(funcLevel,locaTypeTable);
+
+                        //函数调用层次加一
+                        funcLevel++;
+
+                        //进入函数空间,清空原有的局域类型表
+                        locaTypeTable.clear();
+
+                        if(!check(TokenType.R_PAREN))
+                            analyseCallParamList();
+                        expect(TokenType.R_PAREN);
+                        funcLevel--;
+
+                        //重新取出原有的类型表
+                        locaTypeTable = typeTable.get(funcLevel);
+
+                        instructions.add(new Instruction(Operation.call,id));
+
+                        //获取原有的slot偏移
+                        stackSetoff1 = slotTable.get(funcLevel);
+                        //判断返回值类型
+                        if(type == Type.Void)
+                        {
+                            isSameType =  (recentType == Type.Void);
+                            recentType = Type.Void;
+                        }
+                        else if(type == Type.Int)
+                        {
+                            isSameType =  (recentType == Type.Int);
+                            recentType = Type.Int;
+                        }
+                        else
+                        {
+                            isSameType =  (recentType == Type.Double);
+                            recentType = Type.Double;
+                        }
+                        isTrue = false;
                     }
-                    else
-                    {
-                        isSameType =  (recentType == Type.Double);
-                        recentType = Type.Double;
-                    }
-                    isTrue = false;
                 }
                 //单独标识符入栈
                 else{
@@ -818,6 +874,7 @@ public final class Analyser {
             instructions.add(new Instruction(Operation.push,l));
             stackSetoff1++;
             locaTypeTable.put(stackSetoff1,Type.Int);
+            recentType = Type.Int;
         }
         else if(check(TokenType.DOUBLE_LITERAL))
         {
@@ -827,6 +884,7 @@ public final class Analyser {
             instructions.add(new Instruction(Operation.push,l));
             stackSetoff1++;
             locaTypeTable.put(stackSetoff1,Type.Double);
+            recentType = Type.Double;
         }
         else if(check(TokenType.STRING_LITERAL))
             expect(TokenType.STRING_LITERAL);
