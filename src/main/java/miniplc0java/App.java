@@ -15,8 +15,8 @@ import java.util.Scanner;
 
 public class App {
     public static void main(String[] args) throws CompileError {
-        var inputFileName = "D:\\Source\\miniplc0-java-master\\src\\main\\java\\miniplc0java\\input.txt";
-        var outputFileName = "D:\\Source\\miniplc0-java-master\\src\\main\\java\\miniplc0java\\output.txt";
+        var inputFileName = args[0];
+        var outputFileName = args[1];
 
         File in = new File(inputFileName);
         File out = new File(outputFileName);
