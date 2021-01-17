@@ -665,6 +665,8 @@ public final class Analyser {
                     if(sy == null)
                     {
                         GlobalEntry gy = findGlobal(name);
+                        if(gy == null)
+                            throw new AnalyzeError(ErrorCode.NotDeclared,curPos);
                         Type type = gy.getType();
                         isSameType = (type == recentType);
                         recentType = type;
