@@ -1,0 +1,7 @@
+let i: int;
+let j: int = 1;
+
+fn _start() -> void
+{
+    i = j + 1;
+}

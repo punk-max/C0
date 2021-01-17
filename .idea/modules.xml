@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/miniplc0java.iml" filepath="$PROJECT_DIR$/.idea/modules/miniplc0java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/miniplc0java.main.iml" filepath="$PROJECT_DIR$/.idea/modules/miniplc0java.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/miniplc0java.test.iml" filepath="$PROJECT_DIR$/.idea/modules/miniplc0java.test.iml" />
+    </modules>
+  </component>
+</project>
