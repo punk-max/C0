@@ -561,11 +561,11 @@ public final class Analyser {
 
     private void analyseMain() throws CompileError {
         // 主过程 -> 常量声明 变量声明 语句序列
-        while (check(TokenType.CONST_KW) || check(TokenType.LET_KW) || check(TokenType.FN_KW))
+        while (check(TokenType.CONST_KW) || check(TokenType.LET_KW) || check(TokenType.FN_KW) || check(TokenType.COMMENT))
         {
             if(check(TokenType.CONST_KW) || check(TokenType.LET_KW))
                 analyseDeclStml();
-            else
+            else if(check(TokenType.FN_KW))
                 analyseFunction();
         }
         //throw new Error("Not implemented");
@@ -761,10 +761,10 @@ public final class Analyser {
                 }
             }
             //如果是字面量，规约为字面量表达式
-            else if(check(TokenType.UINT_LITERAL) || check(TokenType.DOUBLE_LITERAL) || check(TokenType.STRING_LITERAL))
+            else if(check(TokenType.UINT_LITERAL) || check(TokenType.DOUBLE_LITERAL) || check(TokenType.STRING_LITERAL) || check(TokenType.CHAR_LITERAL))
             {
                 analyseLiteralExpr();
-                isTrue = false;
+                isTrue = false; 
             }
             //如果是左括号规约为括号表达式
             else if(check(TokenType.L_PAREN))
@@ -888,6 +888,8 @@ public final class Analyser {
         }
         else if(check(TokenType.STRING_LITERAL))
             expect(TokenType.STRING_LITERAL);
+        else if(check(TokenType.CHAR_LITERAL))
+            expect(TokenType.CHAR_LITERAL);
         else
             throw new TokenizeError(ErrorCode.InvalidInput,curPos);
     }
@@ -1158,6 +1160,8 @@ public final class Analyser {
             else if(check(TokenType.SEMICOLON)){
                 expect(TokenType.SEMICOLON);
             }
+            else if(check(TokenType.COMMENT))
+                expect(TokenType.COMMENT);
             else
                 break;
         }
