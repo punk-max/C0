@@ -594,7 +594,7 @@ public final class Analyser {
                 //需要考虑取反数值的类型
                 if(locaTypeTable.get(stackSetoff1)==Type.Double)
                     instructions.add(new Instruction(Operation.subf));
-                else if(locaTypeTable.get(stackSetoff1)==Type.Double)
+                else if(locaTypeTable.get(stackSetoff1)==Type.Int)
                     instructions.add(new Instruction(Operation.subi));
                 else
                     throw new AnalyzeError(ErrorCode.WrongType,curPos);
