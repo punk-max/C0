@@ -600,6 +600,8 @@ public final class Analyser {
                 else if(check(TokenType.L_PAREN))
                 {
                     GlobalEntry g = findGlobal(name);
+                    if(gy == null)
+                        throw new AnalyzeError(ErrorCode.NotDeclared,curPos);
                     Type type = g.getType();
                     if(!g.isFunc)
                         throw new AnalyzeError(ErrorCode.InvalidIdentifier,curPos);
