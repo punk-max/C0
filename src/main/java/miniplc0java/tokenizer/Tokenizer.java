@@ -242,11 +242,9 @@ public class Tokenizer {
             case '/':
                 if(it.peekChar()=='/')
                 {
-                    Pos start = it.previousPos();
                     while (it.peekChar()!='\n')
                         it.nextChar();
                     it.nextChar();
-                    return new Token(TokenType.COMMENT, null, start, it.currentPos());
                 }
                 // 填入返回语句
                 return new Token(TokenType.DIV, '/', it.previousPos(), it.currentPos());
