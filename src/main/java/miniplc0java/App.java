@@ -60,7 +60,10 @@ public class App {
         str+=globalCount;
         for(GlobalEntry item : globalEntries)
         {
-            str+=Instruction.toLexString(item.getId())+"\n";
+            if(item.isConstant())
+                str+="01\n";
+            else
+                str+="00\n";
             if(item.isFunc())
             {
                 String s = item.getValue().toString();
