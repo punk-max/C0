@@ -104,13 +104,13 @@ public class Tokenizer {
             case '\'':
                 s.append('\'');
                 return true;
-            case '\n':
+            case 'n':
                 s.append('\n');
                 return true;
-            case '\r':
+            case 'r':
                 s.append('\r');
                 return true;
-            case '\t':
+            case 't':
                 s.append('\t');
                 return true;
             default:
@@ -240,6 +240,14 @@ public class Tokenizer {
                 return new Token(TokenType.MUL, '*', it.previousPos(), it.currentPos());
 
             case '/':
+                if(it.peekChar()=='/')
+                {
+                    Pos start = it.previousPos();
+                    while (it.peekChar()!='\n')
+                        it.nextChar();
+                    it.nextChar();
+                    return new Token(TokenType.COMMENT, null, start, it.currentPos());
+                }
                 // 填入返回语句
                 return new Token(TokenType.DIV, '/', it.previousPos(), it.currentPos());
             // 填入更多状态和返回语句
