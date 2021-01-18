@@ -41,6 +41,9 @@ public final class Analyser {
 
     Object literal;
 
+    //字符串入栈长度
+    int length = 1;
+
     //是否进入函数
     boolean inFunc = false;
 
@@ -366,12 +369,17 @@ public final class Analyser {
             isTrue = true;
         }
         else if(name.equals("putstr")){
-            instructions.add(new Instruction(Operation.prints));
-            stackSetoff1--;
+            for(int i = 0;i<length;i++)
+            {
+                instructions.add(new Instruction(Operation.printc));
+                stackSetoff1--;
+            }
+            length = 1;
             isTrue = true;
         }
         else if(name.equals("putln")){
-            instructions.add(new Instruction(Operation.printi));
+            instructions.add(new Instruction(Operation.push,(long)'\n'));
+            instructions.add(new Instruction(Operation.printc));
         }
         else
             throw new AnalyzeError(ErrorCode.NotDeclared,curPos);
@@ -869,12 +877,13 @@ public final class Analyser {
         if(check(TokenType.UINT_LITERAL))
         {
             Token t = expect(TokenType.UINT_LITERAL);
-            literal = Integer.parseInt(t.getValue().toString());;
+            literal = Integer.parseInt(t.getValue().toString());
             long l = (long)Integer.parseInt(t.getValue().toString());
             instructions.add(new Instruction(Operation.push,l));
             stackSetoff1++;
             locaTypeTable.put(stackSetoff1,Type.Int);
             recentType = Type.Int;
+            isTrue = false;
         }
         else if(check(TokenType.DOUBLE_LITERAL))
         {
@@ -885,11 +894,23 @@ public final class Analyser {
             stackSetoff1++;
             locaTypeTable.put(stackSetoff1,Type.Double);
             recentType = Type.Double;
+            isTrue = false;
         }
         else if(check(TokenType.STRING_LITERAL))
-            expect(TokenType.STRING_LITERAL);
+        {
+            Token t = expect(TokenType.STRING_LITERAL);
+            String str = t.getValue().toString();
+            length = str.length();
+            for(int i = length-1;i>=0;i--)
+                instructions.add(new Instruction(Operation.push,(long)str.charAt(i)));
+            isTrue = false;
+        }
         else if(check(TokenType.CHAR_LITERAL))
-            expect(TokenType.CHAR_LITERAL);
+        {
+            Token t = expect(TokenType.CHAR_LITERAL);
+            instructions.add(new Instruction(Operation.push,(long)t.getValue()));
+            isTrue = false;
+        }
         else
             throw new TokenizeError(ErrorCode.InvalidInput,curPos);
     }
@@ -1040,9 +1061,12 @@ public final class Analyser {
         analyseBlockStml();
         int mark2 = instructions.size();
         if(anti)
-            instructions.add(mark1,new Instruction(Operation.brfalse,mark2+1));
+        {
+
+            instructions.add(mark1,new Instruction(Operation.brfalse,mark2-mark1));
+        }
         else
-            instructions.add(mark1,new Instruction(Operation.brtrue,mark2+1));
+            instructions.add(mark1,new Instruction(Operation.brtrue,mark2-mark1));
         stackSetoff1--;
         //如果后面有else语句
         if(check(TokenType.ELSE_KW))
@@ -1058,7 +1082,7 @@ public final class Analyser {
             {
                 analyseBlockStml();
                 int mark3 = instructions.size();
-                instructions.add(mark2+1,new Instruction(Operation.br,mark3+1));
+                instructions.add(mark2+1,new Instruction(Operation.br,mark3-mark2-1));
             }
             //其它报错
             else
@@ -1075,9 +1099,9 @@ public final class Analyser {
         instructions.add(new Instruction(Operation.br,mark1));
         int mark2 = instructions.size();
         if(anti)
-            instructions.add(mark1,new Instruction(Operation.brfalse,mark2+1));
+            instructions.add(mark1,new Instruction(Operation.brfalse,mark2-mark1));
         else
-            instructions.add(mark1,new Instruction(Operation.brtrue,mark2+1));
+            instructions.add(mark1,new Instruction(Operation.brtrue,mark2-mark1));
         stackSetoff1--;
     }
 
@@ -1086,7 +1110,7 @@ public final class Analyser {
         var token = expect(TokenType.RETURN_KW);
         Pos curPos = token.getStartPos();
         if(check(TokenType.MINUS) || check(TokenType.IDENT) || check(TokenType.UINT_LITERAL) ||
-                check(TokenType.DOUBLE_LITERAL) || check(TokenType.STRING_LITERAL) || check(TokenType.L_PAREN))
+                check(TokenType.DOUBLE_LITERAL) || check(TokenType.STRING_LITERAL) || check(TokenType.L_PAREN) || check(TokenType.CHAR_LITERAL))
         {
             analyseExpr();
             instructions.add(new Instruction(Operation.arga,0));
@@ -1138,8 +1162,10 @@ public final class Analyser {
                 //如果表达式没意义
                 if(!isTrue)
                 {
-                    instructions.add(new Instruction(Operation.pop));
-                    stackSetoff1--;
+                    for(int i = 0;i<length;i++)
+                        instructions.add(new Instruction(Operation.pop));
+                    stackSetoff1-=length;
+                    length = 1;
                 }
             } 
             else if(check(TokenType.LET_KW) || check(TokenType.CONST_KW)) {
