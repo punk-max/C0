@@ -245,6 +245,7 @@ public class Tokenizer {
                     while (it.peekChar()!='\n')
                         it.nextChar();
                     it.nextChar();
+                    break;
                 }
                 // 填入返回语句
                 return new Token(TokenType.DIV, '/', it.previousPos(), it.currentPos());
