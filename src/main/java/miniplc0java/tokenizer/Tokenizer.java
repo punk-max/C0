@@ -158,7 +158,7 @@ public class Tokenizer {
             else {
                 it.nextChar();
                 epos = it.currentPos();
-                return new Token(TokenType.CHAR_LITERAL, s.toString(),spos,epos );
+                return new Token(TokenType.CHAR_LITERAL, s.toString().charAt(0),spos,epos );
             }
         }
         else
